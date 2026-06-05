@@ -1,109 +1,109 @@
 # Superisor Agent
 
-A **multi-agent orchestration framework** built with LangChain and DeepSeek, featuring a hierarchical supervisor pattern that intelligently delegates tasks to specialized sub-agents.
+基于 **LangChain + DeepSeek** 的多智能体编排框架，采用层级 Supervisor 模式，智能地将任务委派给专门的子智能体。
 
-## Overview
+## 概述
 
-Superisor Agent implements a **Supervisor + Sub-agents** architecture:
+Superisor Agent 实现了 **Supervisor + 子智能体** 架构：
 
-- A **Supervisor Agent** acts as the central dispatcher, analyzing user intent and routing tasks
-- **Specialized sub-agents** handle domain-specific operations (search, email, etc.)
-- Sub-agents can use **MCP (Model Context Protocol) servers** to access external tools and data sources
+- **Supervisor Agent** 作为中央调度器，分析用户意图并路由任务
+- **专业子智能体** 处理特定领域操作（搜索、邮件等）
+- 子智能体可通过 **MCP（Model Context Protocol）Server** 访问外部工具和数据源
 
-The supervisor decides which sub-agent to invoke based on the context — for example, checking weather to decide whether to query train tickets, then composing and sending an appropriate email.
+Supervisor 根据上下文决定调用哪个子智能体 — 例如，查询天气来判断是否需要查询火车票，然后撰写并发送合适的邮件。
 
-## Architecture
+## 架构
 
 ```
 ┌────────────────────────────────────────────┐
 │           Supervisor Agent                 │
-│  (Intent routing & task orchestration)     │
+│   (意图路由与任务编排)                      │
 ├────────────────┬───────────────────────────┤
 │  Search Agent  │      Email Agent          │
-│  (Bing / 12306 │  (QQ SMTP mailing)        │
-│   via MCP)     │                           │
+│  (Bing / 12306 │  (QQ SMTP 邮件发送)       │
+│   通过 MCP)    │                           │
 └────────────────┴───────────────────────────┘
 ```
 
-### Layers
+### 分层架构
 
-| Layer | Module | Responsibility |
-|-------|--------|----------------|
-| **LLM** | `my_llm.py` | LLM initialization (DeepSeek via LangChain) |
-| **Config** | `config.py` | Centralized configuration from environment variables |
-| **Tools** | `tools.py` | Atomic tools (email sending via SMTP) |
-| **Agent Factory** | `agent_factory.py` | Creates sub-agents and the supervisor |
-| **Stream Output** | `stream_output.py` | Streaming handler for agent output |
-| **Entry** | `main.py` | Application entry point with async orchestration |
+| 层级 | 模块 | 职责 |
+|------|------|------|
+| **LLM** | `my_llm.py` | 大模型初始化（DeepSeek via LangChain） |
+| **配置** | `config.py` | 基于环境变量的集中配置管理 |
+| **工具** | `tools.py` | 原子化工具（SMTP 邮件发送等） |
+| **Agent 工厂** | `agent_factory.py` | 创建子智能体和 Supervisor |
+| **流式输出** | `stream_output.py` | 智能体输出的流式处理 |
+| **入口** | `main.py` | 应用入口，异步编排 |
 
-## Features
+## 功能特性
 
-- **Multi-agent orchestration** — supervisor delegates to sub-agents based on intent
-- **MCP integration** — connect to external MCP servers for search, data retrieval, etc.
-- **Async streaming** — real-time streaming of agent reasoning and output
-- **Tool calling** — pluggable tool layer (SMTP email, web search, 12306 train queries)
-- **Environment-based config** — secrets managed via `.env`, never hardcoded
+- **多智能体编排** — Supervisor 根据意图将任务委派给子智能体
+- **MCP 集成** — 连接外部 MCP Server 以获取搜索、数据检索等能力
+- **异步流式输出** — 实时流式输出智能体的推理过程和结果
+- **工具调用** — 可插拔的工具层（SMTP 邮件、网络搜索、12306 火车票查询）
+- **环境变量配置** — 密钥通过 `.env` 管理，绝不硬编码
 
-## Prerequisites
+## 环境要求
 
 - Python 3.10+
-- A [DeepSeek](https://platform.deepseek.com/) API key
-- (Optional) A [ModelScope](https://www.modelscope.cn/) token for MCP server access
-- (Optional) A QQ email account with SMTP service enabled for email sending
+- [DeepSeek](https://platform.deepseek.com/) API 密钥
+- （可选）用于 MCP Server 访问的 [ModelScope](https://www.modelscope.cn/) Token
+- （可选）开启了 SMTP 服务的 QQ 邮箱（用于邮件发送）
 
-## Quick Start
+## 快速开始
 
-### 1. Clone and install
+### 1. 克隆并安装依赖
 
 ```bash
-git clone https://github.com/<your-username>/superisor-agent.git
+git clone https://github.com/2577554682/superisor-agent.git
 cd superisor-agent
 pip install -r requirements.txt
 ```
 
-### 2. Configure environment
+### 2. 配置环境变量
 
-Create a `.env` file in the project root:
+在项目根目录创建 `.env` 文件：
 
 ```ini
-# Required
+# 必填
 DEEPSEEK_API_KEY=sk-your-deepseek-api-key
 DEEPSEEK_BASE_URL=https://api.deepseek.com/v1
 
-# Optional — for MCP server access
+# 可选 — 用于 MCP Server 访问
 MODELSCOPE_TOKEN=your-modelscope-token
 
-# Optional — for email sending (QQ SMTP)
+# 可选 — 用于邮件发送（QQ SMTP）
 SMTP_USER=your-email@qq.com
 SMTP_PASS=your-smtp-authorization-code
 ```
 
-> **Security:** The `.env` file is listed in `.gitignore` and **must never be committed**.
+> **安全提醒：** `.env` 文件已在 `.gitignore` 中，**禁止提交到仓库**。
 
-### 3. Run
+### 3. 运行
 
 ```bash
 python main.py
 ```
 
-The demo will execute an example workflow:
-1. Query today's weather for a city
-2. Decide whether to retrieve train tickets based on the weather
-3. Send an appropriate email notification
+示例程序将执行以下工作流：
+1. 查询某城市的当天天气
+2. 根据天气情况决定是否查询火车票
+3. 发送合适的邮件通知
 
-## Configuration
+## 配置说明
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `DEEPSEEK_API_KEY` | Yes | DeepSeek platform API key |
-| `DEEPSEEK_BASE_URL` | Yes | DeepSeek API base URL |
-| `MODELSCOPE_TOKEN` | No | Token for ModelScope-hosted MCP servers |
-| `SMTP_USER` | No | QQ email address (for SMTP) |
-| `SMTP_PASS` | No | QQ SMTP authorization code |
+| 变量 | 必填 | 说明 |
+|----------|------|------|
+| `DEEPSEEK_API_KEY` | 是 | DeepSeek 平台 API 密钥 |
+| `DEEPSEEK_BASE_URL` | 是 | DeepSeek API 基础地址 |
+| `MODELSCOPE_TOKEN` | 否 | 用于访问 ModelScope 托管的 MCP Server |
+| `SMTP_USER` | 否 | QQ 邮箱地址（用于 SMTP） |
+| `SMTP_PASS` | 否 | QQ 邮箱 SMTP 授权码 |
 
-### Customizing MCP servers
+### 自定义 MCP Server
 
-Edit `config.py` to add or modify MCP server configurations:
+编辑 `config.py` 来添加或修改 MCP Server 配置：
 
 ```python
 @classmethod
@@ -117,37 +117,37 @@ def get_mcp_config(cls) -> dict:
     }
 ```
 
-## Project Structure
+## 项目结构
 
 ```
 superisor_agent/
 ├── superisor_agent_demo/
 │   ├── __init__.py
-│   ├── config.py           # Configuration management
-│   ├── tools.py            # Atomic tools (email, etc.)
-│   ├── agent_factory.py    # Agent builder (factory pattern)
-│   ├── stream_output.py    # Streaming output handler
-│   └── main.py             # Application entry point
-├── env_utils.py            # Environment loader
-├── my_llm.py               # LLM initialization
-├── .env                    # Local secrets (gitignored)
+│   ├── config.py           # 配置管理
+│   ├── tools.py            # 原子化工具（邮件等）
+│   ├── agent_factory.py    # Agent 构建器（工厂模式）
+│   ├── stream_output.py    # 流式输出处理
+│   └── main.py             # 应用入口
+├── env_utils.py            # 环境变量加载工具
+├── my_llm.py               # 大模型初始化
+├── .env                    # 本地密钥（已 gitignore）
 ├── .gitignore
 └── README.md
 ```
 
-## Extending
+## 扩展指南
 
-### Add a new tool
+### 添加新工具
 
-1. Define a `@tool` function in `tools.py`
-2. Create a corresponding sub-agent in `agent_factory.py`
-3. Register it with the supervisor
+1. 在 `tools.py` 中定义 `@tool` 函数
+2. 在 `agent_factory.py` 中创建对应的子智能体
+3. 在 Supervisor 中注册该智能体
 
-### Add an MCP server
+### 添加 MCP Server
 
-1. Add the server config to `Config.get_mcp_config()` in `config.py`
-2. The `MultiServerMCPClient` will load its tools automatically
+1. 在 `config.py` 的 `Config.get_mcp_config()` 中添加 Server 配置
+2. `MultiServerMCPClient` 将自动加载其工具
 
-## License
+## 许可证
 
 MIT
